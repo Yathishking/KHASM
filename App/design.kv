@@ -1,0 +1,298 @@
+#:kivy 1.0
+
+WindowManager:
+
+<MainWindow>:
+    name: "main_window"
+
+<SecondWindow>:
+    name: "second_window" 
+
+<MainPanel>:
+
+    image: image
+    drawing_field: drawing_field
+    crop_button: crop_button
+
+    BoxLayout:
+        orientation: 'horizontal'
+        
+
+        DrawingField:
+            selection: selection
+            id: drawing_field
+            crop_button: crop_button
+
+            size_hint: None, None
+            size:  root.width * 0.7, root.height
+
+            canvas.before:
+                Color:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
+                    size:  root.width * 0.7, root.height
+
+
+            Image:
+                id: image
+                size_hint: None, None
+                size: root.width * 0.7 * 0.8, root.height * 0.8
+                pos: root.width * 0.7 * 0.1, root.height * 0.1
+
+            LineRectangle:
+                id: selection
+                pos: -100, -100
+                
+                size: (100, 100)     
+                  
+        RelativeLayout:
+            size_hint: None, None
+            size:  root.width * 0.3, root.height
+
+            canvas.before:
+                Color:
+                    rgba: 0.066, 0.674, 0.592, 0.8
+
+                Rectangle:
+                    size:  root.width * 0.35, root.height
+
+
+
+            MyButton:
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .85}
+                text: "Load image"
+                on_release: root.load()
+            
+            ToggleButton:
+                id: crop_button
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .7}
+                text: "Crop image" if self.state == "normal" else  "Image cropping"
+                on_state: root.crop()
+
+            GridLayout:
+                size_hint: .9, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                rows: 1
+                MyButton:
+                    size_hint: .5, 1
+                    text: "Rotate \n   left"
+                    on_release: root.rotate_left()
+
+                MyButton:
+                    size_hint: 0.5, 1
+                    text: "Rotate \n  right"
+                    on_release: root.rotate_right()
+
+            MyButton:
+                size_hint: 0.35, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .39}
+                text: "Restore"
+                on_release: root.restore()
+
+            
+            MyButton:
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .1}
+                text: "Submit"
+                on_release: app.root.main_to_second()
+                
+
+
+<LineRectangle>:
+    canvas.after:
+        Color:
+            #rgba: 0.49, 0.49, 0.49, 1
+            rgba: 1, 0, 0, 1
+        Line:
+            width: 1.75
+            rectangle: (self.x, self.y, self.width, self.height)
+
+
+<SecondPanel>:
+    plot_field: plot_field
+    slider: slider
+    slider_value: slider_value
+
+    switch: switch
+    horizontal_button: horizontal_button
+    vertical_button: vertical_button
+
+
+    BoxLayout:
+        orientation: 'horizontal'
+        
+
+        BoxLayout:
+            id: plot_field
+
+            size_hint: None, None
+            size:  root.width * 0.7, root.height
+     
+                  
+        RelativeLayout:
+            size_hint: None, None
+            size:  root.width * 0.3, root.height
+
+            canvas.before:
+                Color:
+                    rgba: 0.066, 0.674, 0.592, 0.8
+                Rectangle:
+                    size:  root.width * 0.35, root.height
+
+            Label:
+                text: "Loaded model"
+                bold: True
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .95}
+
+            Label:
+                id: model_label
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .92}
+                text: root.model_label
+
+            Switch:
+                id: switch
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .29, 'center_y': .74}
+                active: False
+                on_active: 
+                    vertical_button.state = "down"
+                    root.filter_and_plot(root.cv2_image, slider.value)
+
+
+            Label:
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .72, 'center_y': .75}
+                text: "Show binarized"
+            Label:
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .72, 'center_y': .72}
+                text: "image"
+
+            
+            
+            GridLayout:
+                size_hint: .8, 0.065
+                pos_hint: {'center_x': .5, 'center_y': .63}
+                rows: 1
+
+                ToggleButton:
+                    id: vertical_button
+                    size_hint: 0.5, 1
+                    text: "Vertical"
+                    group: "image_position"
+                    state: "normal"
+                    allow_no_selection: False if switch.active else True
+                    on_press: root.toggle_clicked()
+            
+
+                ToggleButton:
+                    id: horizontal_button
+                    size_hint: 0.5, 1
+                    text: "Horizontal"
+                    group: "image_position"
+                    state: "normal"
+                    allow_no_selection: False if switch.active else True
+                    on_press: root.toggle_clicked()
+                    
+                
+
+            Label:
+                text: "Filter threshold"
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .48}
+
+            Slider:
+                id: slider
+                size_hint: 1, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .43}
+                min: 0
+                max: 200
+                value: 75
+                on_value: root.filter_and_plot(root.cv2_image, self.value)
+            
+            TextInput:
+                id: slider_value
+                multiline: False
+                size_hint: 0.15, 0.05
+                pos_hint: {'center_x': .5, 'center_y': .35}
+                font_size: self.width * 0.45
+                text: str(round(slider.value))
+                on_text_validate: root.validate_input()
+
+
+            MyButton:
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .2}
+                text: "Go back"
+                
+                on_release: 
+                    app.root.current = "main_window"
+                    app.root.transition.direction = 'right'
+
+            MyButton:
+                size_hint: 0.7, 0.1
+                pos_hint: {'center_x': .5, 'center_y': .1}
+                text: "Analyze"
+                
+                on_release: root.analyze()
+
+<MyButton@Button>:
+    size: self.size
+    pos: self.pos
+    text: self.text
+
+<MyPopup>:
+    result_label: result_label
+    auto_dismiss: False
+
+    title: "Analysis" 
+    size_hint: (None, None) 
+    size: (400, 300)
+
+    FloatLayout:
+        Label:
+            text:" Your result: "
+            size_hint: 0.6, 0.2
+            pos_hint: {'center_x': .5, 'center_y': .9}
+
+        Label:
+            id: result_label
+            text:""
+            size_hint: 0.6, 0.2
+            pos_hint: {'center_x': .5, 'center_y': .7}
+
+        Button:
+            text: "Continue"
+            size_hint: 0.8, 0.2
+            pos_hint: {'center_x': .5, 'center_y': .2}
+            on_release: root.dismiss()
+
+<ErrorPopup>:
+    error_label: error_label
+    auto_dismiss: False
+
+    title: "An error occured"
+    title_align: "center"
+    size_hint: (None, None) 
+    size: (300, 300)
+
+    separator_height: 4
+    separator_color: 1, 0, 0, 1
+    FloatLayout:
+
+        Label:
+            id: error_label
+            text:""
+            bold: True
+            size_hint: 0.6, 0.2
+            pos_hint: {'center_x': .5, 'center_y': .7}
+
+        Button:
+            text: "OK"
+            size_hint: 0.8, 0.2
+            pos_hint: {'center_x': .5, 'center_y': .2}
+            on_release: root.dismiss()
